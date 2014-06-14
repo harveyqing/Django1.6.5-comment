@@ -221,6 +221,7 @@ def new_method_proxy(func):
     return inner
 
 #: 要学会`Proxy`模式的使用
+#: 这个类是一个代理类，所有对`_wrapped`类的操作都由该类代理
 class LazyObject(object):
     """
     A wrapper for another class that can be used to delay instantiation of the
@@ -260,6 +261,7 @@ class LazyObject(object):
     def _setup(self):
         """
         Must be implemented by subclasses to initialise the wrapped object.
+        子类一定要实现该方法。
         """
         raise NotImplementedError
 
@@ -281,35 +283,39 @@ class LazyObject(object):
 
 
 # Workaround for http://bugs.python.org/issue12370
+#: 注意，这里是Python 3.1/3.2的一个bug，详细可以点上面的链接
 _super = super
 
 
 class SimpleLazyObject(LazyObject):
     """
     A lazy object initialised from any function.
+    一个从任意函数初始化的lazy对象。
 
     Designed for compound objects of unknown type. For builtins or objects of
     known type, use django.utils.functional.lazy.
+    为类型未知的复合对象设计。对于builtins或者未知类型对象，使用`django.utils.functional.lazy`。
     """
     def __init__(self, func):
         """
         Pass in a callable that returns the object to be wrapped.
+        传入一个callable，它将返回被包装的对象。
 
         If copies are made of the resulting SimpleLazyObject, which can happen
         in various circumstances within Django, then you must ensure that the
         callable can be safely run more than once and will return the same
         value.
         """
-        self.__dict__['_setupfunc'] = func
+        self.__dict__['_setupfunc'] = func  #: `func`是代理对象`SimpleLazyObject`实例的安装函数（负责初始化_wrapped对象）
         _super(SimpleLazyObject, self).__init__()
 
     def _setup(self):
         self._wrapped = self._setupfunc()
 
-    if six.PY3:
+    if six.PY3:  #: PY3
         __bytes__ = new_method_proxy(bytes)
         __str__ = new_method_proxy(str)
-    else:
+    else:  #: PY2
         __str__ = new_method_proxy(str)
         __unicode__ = new_method_proxy(unicode)
 
