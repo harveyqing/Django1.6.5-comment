@@ -195,12 +195,16 @@ def iri_to_uri(iri):
     """
     Convert an Internationalized Resource Identifier (IRI) portion to a URI
     portion that is suitable for inclusion in a URL.
+    将一个“国际资源标识符”(IRI)转化为URI，以便在URL中更合适。
 
     This is the algorithm from section 3.1 of RFC 3987.  However, since we are
     assuming input is either UTF-8 or unicode already, we can simplify things a
     little from the full method.
+    这是RFC 3987中3.1部分的算法。然而，因为我们假定输入已经是UTF-8或者unicode，我们可以简化
+    一些。
 
     Returns an ASCII string containing the encoded result.
+    返回一个包含编码了得ASCII字串作为结果。
     """
     # The list of safe characters here is constructed from the "reserved" and
     # "unreserved" characters specified in sections 2.2 and 2.3 of RFC 3986:
