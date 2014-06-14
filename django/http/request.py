@@ -29,6 +29,7 @@ class UnreadablePostError(IOError):
     pass
 
 
+#: http请求类
 class HttpRequest(object):
     """A basic HTTP request."""
 
@@ -52,7 +53,9 @@ class HttpRequest(object):
         return build_request_repr(self)
 
     def get_host(self):
-        """Returns the HTTP host using the environment or request headers."""
+        """Returns the HTTP host using the environment or request headers.
+        通过`environment`或者请求头获得HTTP主机。
+        """
         # We try three options, in order of decreasing preference.
         if settings.USE_X_FORWARDED_HOST and (
             'HTTP_X_FORWARDED_HOST' in self.META):
@@ -66,7 +69,7 @@ class HttpRequest(object):
             if server_port != ('443' if self.is_secure() else '80'):
                 host = '%s:%s' % (host, server_port)
 
-        allowed_hosts = ['*'] if settings.DEBUG else settings.ALLOWED_HOSTS
+        allowed_hosts = ['*'] if settings.DEBUG else settings.ALLOWED_HOSTS  #: 注意这里使用的安全性考虑
         domain, port = split_domain_port(host)
         if domain and validate_host(domain, allowed_hosts):
             return host
