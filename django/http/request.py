@@ -71,11 +71,11 @@ class HttpRequest(object):
 
         allowed_hosts = ['*'] if settings.DEBUG else settings.ALLOWED_HOSTS  #: 注意这里使用的安全性考虑
         domain, port = split_domain_port(host)
-        if domain and validate_host(domain, allowed_hosts):
+        if domain and validate_host(domain, allowed_hosts):  
             return host
         else:
             msg = "Invalid HTTP_HOST header: %r." % host
-            if domain:
+            if domain:  #: 请求头中有domain，但是该domain不在site的`ALLOWED_HOSTS`中
                 msg += "You may need to add %r to ALLOWED_HOSTS." % domain
             raise DisallowedHost(msg)
 
@@ -491,6 +491,7 @@ def split_domain_port(host):
 def validate_host(host, allowed_hosts):
     """
     Validate the given host for this site.
+    为该site验证给定的host。
 
     Check that the host looks valid and matches a host or host pattern in the
     given list of ``allowed_hosts``. Any pattern beginning with a period
