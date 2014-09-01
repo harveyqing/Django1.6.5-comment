@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 # ACTION_CHECKBOX_NAME is unused, but should stay since its import from here
+
 # has been referenced in documentation.
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.admin.options import ModelAdmin, HORIZONTAL, VERTICAL
@@ -14,6 +17,7 @@ def autodiscover():
     Auto-discover INSTALLED_APPS admin.py modules and fail silently when
     not present. This forces an import on them to register any admin bits they
     may want.
+    在`INSTALLED_APPS`中自动发现`admin.py`模块，当没有发现时静默处理错误。
     """
 
     import copy
@@ -22,8 +26,9 @@ def autodiscover():
     from django.utils.module_loading import module_has_submodule
 
     for app in settings.INSTALLED_APPS:
-        mod = import_module(app)
+        mod = import_module(app)  #: 导入这个app
         # Attempt to import the app's admin module.
+        #: 尝试导入该app的 `admin` 模块
         try:
             before_import_registry = copy.copy(site._registry)
             import_module('%s.admin' % app)

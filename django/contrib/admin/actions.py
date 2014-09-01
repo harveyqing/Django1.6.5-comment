@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 """
 Built-in, globally-available admin actions.
+内置、全局的管理动作
 """
 
 from django.core.exceptions import PermissionDenied
@@ -14,10 +16,13 @@ from django.utils.translation import ugettext_lazy, ugettext as _
 def delete_selected(modeladmin, request, queryset):
     """
     Default action which deletes the selected objects.
+    删除所选择对象的默认动作。
 
     This action first displays a confirmation page whichs shows all the
     deleteable objects, or, if the user has no permission one of the related
     childs (foreignkeys), a "permission denied" message.
+    触发这个动作以后，首先会显示一个确认页面，页面上展示了所有可删除对象，或者，如果一个
+    用户没有任何一个关联子项（外键）的权限，就显示一条`permission denied`的消息。
 
     Next, it deletes all selected objects and redirects back to the change list.
     """

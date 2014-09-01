@@ -33,6 +33,10 @@ class AdminSite(object):
     register() method, and the get_urls() method can then be used to access Django view
     functions that present a full admin interface for the collection of registered
     models.
+
+    一个`AdminSite`对象封装了一个Django的admin应用的实例，并将hook到你的`URLconf`上。`Models`通过
+    `register()`方法注册到`AdminSite`上，然后利用`get_urls()`方法可以访问到Django的view函数，这些
+    view函数将会为所有的已注册`Model`提供一个完全的管理借口。
     """
     login_form = None
     index_template = None
