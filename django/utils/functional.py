@@ -213,6 +213,7 @@ def allow_lazy(func, *resultclasses):
 empty = object()
 
 
+#: 该方法保证将`func`函数应用到`_wrapped`对象上，这样`_wrapped`对象就是`Lazy`的
 def new_method_proxy(func):
     def inner(self, *args):
         if self._wrapped is empty:
@@ -222,11 +223,13 @@ def new_method_proxy(func):
 
 #: 要学会`Proxy`模式的使用
 #: 这个类是一个代理类，所有对`_wrapped`类的操作都由该类代理
+#: 关于`Lazy`的意义，Lazy对象一般依附于LazyObject对象，在初始化时，Lazy对象并不初始化，
+#: 只有LazyObject被初始化。只有当需要操作Lazy对象时才对其进行访问，这样可以减小内存损耗。
 class LazyObject(object):
     """
     A wrapper for another class that can be used to delay instantiation of the
     wrapped class.
-    用户延迟被包装对象实例化的wrapper
+    用于延迟被包装对象实例化的wrapper
 
     By subclassing, you have the opportunity to intercept and alter the
     instantiation. If you don't need to do that, use SimpleLazyObject.
@@ -243,7 +246,7 @@ class LazyObject(object):
     __getattr__ = new_method_proxy(getattr)
 
     def __setattr__(self, name, value):
-        if name == "_wrapped":
+        if name == "_wrapped":  #: 如果是对`LazyObject`设置`_wrapped`属性，覆盖，此时非`Lazy`了
             # Assign to __dict__ to avoid infinite __setattr__ loops.
             self.__dict__["_wrapped"] = value
         else:
