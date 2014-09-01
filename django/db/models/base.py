@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import unicode_literals
 
 import copy
@@ -54,33 +56,41 @@ def subclass_exception(name, parents, module, attached_to=None):
 class ModelBase(type):
     """
     Metaclass for all models.
+    所有model的元类。
     """
-    def __new__(cls, name, bases, attrs):
+    def __new__(cls, name, bases, attrs):   #: 在元类中，当创建类时调用
         super_new = super(ModelBase, cls).__new__
 
         # six.with_metaclass() inserts an extra class called 'NewBase' in the
         # inheritance tree: Model -> NewBase -> object. But the initialization
         # should be executed only once for a given model class.
+        # six.with_metaclass()在继承树插入了一个额外的`NewBase`类，然后继承树就变成：
+        # Model -> NewBase -> object。但是对于一个给定的model类，初始化只会执行一次。
 
         # attrs will never be empty for classes declared in the standard way
         # (ie. with the `class` keyword). This is quite robust.
-        if name == 'NewBase' and attrs == {}:
+        if name == 'NewBase' and attrs == {}:   #: 如果新创建的类名为`NewBase`且该类尚无属性
             return super_new(cls, name, bases, attrs)
 
         # Also ensure initialization is only performed for subclasses of Model
         # (excluding Model class itself).
+        # 保证初始化只会作用于`Model`的子类 （除了`Model`类之外）
         parents = [b for b in bases if isinstance(b, ModelBase) and
                 not (b.__name__ == 'NewBase' and b.__mro__ == (b, object))]
+        #: parents满足：
+        #:     - b是`ModelBase`的实例 (元类的实例是类)
+        #:     - b的名字不为`NewBase`
+        #:     - b是一个基类
         if not parents:
             return super_new(cls, name, bases, attrs)
 
-        # Create the class.
-        module = attrs.pop('__module__')
-        new_class = super_new(cls, name, bases, {'__module__': module})
-        attr_meta = attrs.pop('Meta', None)
+        # Create the class.  类的创建
+        module = attrs.pop('__module__')  #: 获取模块名称
+        new_class = super_new(cls, name, bases, {'__module__': module})  #: 在该类的__dict__中加入`__module__`
+        attr_meta = attrs.pop('Meta', None)  #: `Model`中的Meta
         abstract = getattr(attr_meta, 'abstract', False)
         if not attr_meta:
-            meta = getattr(new_class, 'Meta', None)
+            meta = getattr(new_class, 'Meta', None)  #: 这些`bases`基类中可能包含`Meta`属性
         else:
             meta = attr_meta
         base_meta = getattr(new_class, '_meta', None)
@@ -88,13 +98,13 @@ class ModelBase(type):
         if getattr(meta, 'app_label', None) is None:
             # Figure out the app_label by looking one level up.
             # For 'django.contrib.sites.models', this would be 'sites'.
-            model_module = sys.modules[new_class.__module__]
+            model_module = sys.modules[new_class.__module__]  #: 为何不直接module?
             kwargs = {"app_label": model_module.__name__.split('.')[-2]}
         else:
             kwargs = {}
 
-        new_class.add_to_class('_meta', Options(meta, **kwargs))
-        if not abstract:
+        new_class.add_to_class('_meta', Options(meta, **kwargs))  #: `add_to_class`继承自`ModelBase`元类
+        if not abstract:  #: Meta非抽象类
             new_class.add_to_class('DoesNotExist', subclass_exception(str('DoesNotExist'),
                     tuple(x.DoesNotExist
                           for x in parents if hasattr(x, '_meta') and not x._meta.abstract)
