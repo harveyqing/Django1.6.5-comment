@@ -41,10 +41,14 @@ class Signal(object):
         self.lock = threading.Lock()
         self.use_caching = use_caching
         # For convenience we create empty caches even if they are not used.
+        # 方便起见，为所有的receivers创建cache。
         # A note about caching: if use_caching is defined, then for each
         # distinct sender we cache the receivers that sender has in
         # 'sender_receivers_cache'. The cache is cleaned when .connect() or
         # .disconnect() is called and populated on send().
+        # 关于缓存需要注意：如果使用了`use_caching`，那么对于每个不同的sender，我们
+        # 在`sender_receivers_cache`里缓存所有的receivers。这个缓存在调用 .connect()
+        # 或者 .disconnect()或者操作 send()时被清除。
         self.sender_receivers_cache = weakref.WeakKeyDictionary() if use_caching else {}
 
     def connect(self, receiver, sender=None, weak=True, dispatch_uid=None):
@@ -56,12 +60,14 @@ class Signal(object):
             receiver
                 A function or an instance method which is to receive signals.
                 Receivers must be hashable objects.
+                用于接收信号的函数或者实例方法。receiver必须是可散列对象。
 
                 If weak is True, then receiver must be weak-referencable (more
                 precisely saferef.safeRef() must be able to create a reference
                 to the receiver).
 
                 Receivers must be able to accept keyword arguments.
+                Receivers必须能够接受keyword参数。
 
                 If receivers have a dispatch_uid attribute, the receiver will
                 not be added if another receiver already exists with that
@@ -81,9 +87,12 @@ class Signal(object):
                 An identifier used to uniquely identify a particular instance of
                 a receiver. This will usually be a string, though it may be
                 anything hashable.
+                用以唯一标识一个receiver的identifier。通常是一个字符串，也可以是任何可
+                散列的对象。
         """
         from django.conf import settings
 
+        #: 每一个receiver都是一个callable对象，它带有一些**kwargs参数
         # If DEBUG is on, check that we got a good receiver
         if settings.configured and settings.DEBUG:
             import inspect
@@ -94,6 +103,7 @@ class Signal(object):
             # try a couple different ways but in the end fall back on assuming
             # it is -- we don't want to prevent registration of valid but weird
             # callables.
+            # 确保receivers必须接受keyword参数。
             try:
                 argspec = inspect.getargspec(receiver)
             except TypeError:
@@ -113,11 +123,12 @@ class Signal(object):
         if weak:
             receiver = saferef.safeRef(receiver, onDelete=self._remove_receiver)
 
-        with self.lock:
+        with self.lock:  #: 线程锁 （请留意这种线程安全的设计）
             for r_key, _ in self.receivers:
-                if r_key == lookup_key:
+                if r_key == lookup_key:  #: 该receiver已经注册到该signal
                     break
             else:
+                #: 将lookup_key和receiver合成tuple加入recevers列表中
                 self.receivers.append((lookup_key, receiver))
             self.sender_receivers_cache.clear()
 
@@ -162,10 +173,13 @@ class Signal(object):
     def send(self, sender, **named):
         """
         Send signal from sender to all connected receivers.
+        sender向所有连接了得receivers发送signal。
 
         If any receiver raises an error, the error propagates back through send,
         terminating the dispatch loop, so it is quite possible to not have all
         receivers called if a raises an error.
+        任何一个receiver抛出异常时，error将被回传到发送方，调度循环将被终止，因此如果任一
+        error产生了，部分receiver可能不会接收到signal。
 
         Arguments:
 
@@ -174,8 +188,10 @@ class Signal(object):
 
             named
                 Named arguments which will be passed to receivers.
+                将被传递给receiver的命名参数。
 
         Returns a list of tuple pairs [(receiver, response), ... ].
+        返回一个(receiver, responses) tuple的列表。
         """
         responses = []
         if not self.receivers or self.sender_receivers_cache.get(sender) is NO_RECEIVERS:

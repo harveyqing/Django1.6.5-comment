@@ -10,16 +10,19 @@ import weakref
 
 def safeRef(target, onDelete = None):
     """Return a *safe* weak reference to a callable target
+    返回一个到可调用的target的*安全*弱引用。
 
     target -- the object to be weakly referenced, if it's a
         bound method reference, will create a BoundMethodWeakref,
         otherwise creates a simple weakref.
+        将被弱引用的对象，如果其为一个bound的引用方法，将创建一个`BoundMethodWeakref`，
+        否则将创建一个简单地weakref.
     onDelete -- if provided, will have a hard reference stored
         to the callable to be called after the safe reference
         goes out of scope with the reference object, (either a
         weakref or a BoundMethodWeakref) as argument.
     """
-    if hasattr(target, '__self__'):
+    if hasattr(target, '__self__'):     #: 实例方法都会有`__self__`属性
         if target.__self__ is not None:
             # Turn a bound method into a BoundMethodWeakref instance.
             # Keep track of these instances for lookup by disconnect().
@@ -36,6 +39,7 @@ def safeRef(target, onDelete = None):
 
 class BoundMethodWeakref(object):
     """'Safe' and reusable weak references to instance methods
+    实例方法的可复用weak ref。
 
     BoundMethodWeakref objects provide a mechanism for
     referencing a bound method without requiring that the
